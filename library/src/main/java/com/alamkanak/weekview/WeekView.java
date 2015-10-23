@@ -113,6 +113,10 @@ public class WeekView extends View {
     private DateTimeInterpreter mDateTimeInterpreter;
     private ScrollListener mScrollListener;
 
+    //state saving features
+    private boolean mHasScrolledToHour = false;
+    private double mScrollToFirstVisibleHour = -1;
+
     private final GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
 
         @Override
@@ -352,6 +356,16 @@ public class WeekView extends View {
 
         // Hide anything that is in the bottom margin of the header row.
         canvas.drawRect(mHeaderColumnWidth, mHeaderTextHeight + mHeaderRowPadding * 2, getWidth(), mHeaderRowPadding * 2 + mHeaderTextHeight + mHeaderMarginBottom + mTimeTextHeight/2 - mHourSeparatorHeight / 2, mHeaderColumnBackgroundPaint);
+    
+        //Scroll to hour
+        if (mIsFirstDraw && !mHasScrolledToHour){
+            mHasScrolledToHour = true;
+            mScrollToHour = mScrollToFirstVisibleHour;
+            goToHour(mScrollToHour);
+            mIsFirstDraw = false;
+
+            Log.d("WeekView", "THIS IS FIRST DRAW");
+        }
     }
 
     private void drawTimeColumnAndAxes(Canvas canvas) {
@@ -388,29 +402,32 @@ public class WeekView extends View {
                 goToDate(mScrollToDay);
 
             mAreDimensionsInvalid = false;
-            if(mScrollToHour >= 0)
+            if(mScrollToHour > 0){
+                mHasScrolledToHour = true;
                 goToHour(mScrollToHour);
+            }
 
             mScrollToDay = null;
             mScrollToHour = -1;
             mAreDimensionsInvalid = false;
         }
-        if (mIsFirstDraw){
-            mIsFirstDraw = false;
-
-            // If the week view is being drawn for the first time, then consider the first day of the week.
-            if(mNumberOfVisibleDays >= 7 && mToday.get(Calendar.DAY_OF_WEEK) != mFirstDayOfWeek) {
-                int difference = (7 + (mToday.get(Calendar.DAY_OF_WEEK) - mFirstDayOfWeek)) % 7;
-                mCurrentOrigin.x += (mWidthPerDay + mColumnGap) * difference;
-            }
-        }
 
         // Consider scroll offset.
         if (mCurrentScrollDirection == Direction.HORIZONTAL) mCurrentOrigin.x -= mDistanceX;
-        int leftDaysWithGaps = (int) -(Math.ceil(mCurrentOrigin.x / (mWidthPerDay + mColumnGap)));
+
+        double posuv = -(mCurrentOrigin.x / (mWidthPerDay + mColumnGap));
+        int rounded = (int) -Math.ceil(-posuv);
+        if(posuv - rounded >= 0.95){
+            rounded++;
+        }
+
+        int leftDaysWithGaps = rounded;
+
         float startFromPixel = mCurrentOrigin.x + (mWidthPerDay + mColumnGap) * leftDaysWithGaps +
                 mHeaderColumnWidth;
         float startPixel = startFromPixel;
+
+        mScrollToFirstVisibleHour = -1;
 
         // Prepare to iterate for each day.
         Calendar day = (Calendar) mToday.clone();
@@ -478,6 +495,10 @@ public class WeekView extends View {
             // Draw the events.
             drawEvents(day, startPixel, canvas);
 
+            if(mScrollToFirstVisibleHour == -1){
+                mScrollToFirstVisibleHour = getIdealScrollHour(day);
+            }
+
             // In the next iteration, start from the next day.
             startPixel += mWidthPerDay + mColumnGap;
         }
@@ -500,7 +521,58 @@ public class WeekView extends View {
             canvas.drawText(dayLabel, startPixel + mWidthPerDay / 2, mHeaderTextHeight + mHeaderRowPadding, sameDay ? mTodayHeaderTextPaint : mHeaderTextPaint);
             startPixel += mWidthPerDay + mColumnGap;
         }
+    }
 
+    /**
+     * Get hour which should be scroll on
+     * @param date Current day
+     * @return Position to scroll
+     */
+    private double getIdealScrollHour(Calendar date){
+        if(isSameDay(today(), date)){
+            Calendar now = Calendar.getInstance();
+            double hour = now.get(Calendar.HOUR_OF_DAY);
+            if(now.get(Calendar.MINUTE)<20 && hour >= 1)
+                hour --;
+            if(getLastHourOfDay(date)>hour)
+                return hour;
+            return -1;
+        }
+        return getFirstHourOfDay(date);
+    }
+
+    private double getFirstHourOfDay(Calendar date){
+        if (mEventRects != null && mEventRects.size() > 0) {
+            for (int i = 0; i < mEventRects.size(); i++) {
+                if (isSameDay(mEventRects.get(i).event.getStartTime(), date)) {
+                    return mEventRects.get(i).event.getStartTime().get(Calendar.HOUR_OF_DAY);
+                }
+            }
+        }
+        return -1;
+    }
+
+    private double getLastHourOfDay(Calendar date){
+        if (mEventRects != null && mEventRects.size() > 0) {
+            for (int i = 0; i < mEventRects.size(); i++) {
+                if (isSameDay(mEventRects.get(i).event.getStartTime(), date)
+                        && (i==mEventRects.size()-1 || !isSameDay(mEventRects.get(i+1).event.getStartTime(), date))) {
+                    return mEventRects.get(i).event.getEndTime().get(Calendar.HOUR_OF_DAY) + 1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private double getFirstVisibleHourOfDay(Calendar date){
+        if (mEventRects != null && mEventRects.size() > 0) {
+            for (int i = 0; i < mEventRects.size(); i++) {
+                if (isSameDay(mEventRects.get(i).event.getStartTime(), date)) {
+                    return mEventRects.get(i).event.getStartTime().get(Calendar.HOUR_OF_DAY);
+                }
+            }
+        }
+        return -1;
     }
 
     /**
@@ -1046,6 +1118,8 @@ public class WeekView extends View {
      */
     public void setNumberOfVisibleDays(int numberOfVisibleDays) {
         this.mNumberOfVisibleDays = numberOfVisibleDays;
+        mScrollToDay = getFirstVisibleDay();
+        mScrollToHour = getFirstVisibleHour();
         mCurrentOrigin.x = 0;
         mCurrentOrigin.y = 0;
         invalidate();
@@ -1516,6 +1590,33 @@ public class WeekView extends View {
      */
     private boolean isSameDay(Calendar dayOne, Calendar dayTwo) {
         return dayOne.get(Calendar.YEAR) == dayTwo.get(Calendar.YEAR) && dayOne.get(Calendar.DAY_OF_YEAR) == dayTwo.get(Calendar.DAY_OF_YEAR);
+    }
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("instanceState", super.onSaveInstanceState());
+        if(mFirstVisibleDay==null)
+            mFirstVisibleDay = Calendar.getInstance();
+        bundle.putLong("firstVisibleDay", mFirstVisibleDay.getTimeInMillis());
+        bundle.putDouble("firstVisibleHour", getFirstVisibleHour());
+    return bundle;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+            
+            if(mFirstVisibleDay == null)
+                mFirstVisibleDay = Calendar.getInstance();
+            this.mFirstVisibleDay.setTimeInMillis(bundle.getLong("firstVisibleDay"));
+            mScrollToHour = bundle.getDouble("firstVisibleHour");
+            mScrollToDay = mFirstVisibleDay;
+            mIsFirstDraw = false;
+            state = bundle.getParcelable("instanceState");
+        }
+        super.onRestoreInstanceState(state);
     }
 
 }
