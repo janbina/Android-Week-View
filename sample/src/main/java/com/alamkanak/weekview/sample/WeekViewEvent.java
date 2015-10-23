@@ -1,4 +1,6 @@
-package com.alamkanak.weekview;
+package com.alamkanak.weekview.sample;
+
+import com.alamkanak.weekview.Eventable;
 
 import java.util.Calendar;
 
@@ -6,7 +8,7 @@ import java.util.Calendar;
  * Created by Raquib-ul-Alam Kanak on 7/21/2014.
  * Website: http://april-shower.com
  */
-public class WeekViewEvent implements Eventable{
+public class WeekViewEvent implements Eventable {
     private long mId;
     private Calendar mStartTime;
     private Calendar mEndTime;
