@@ -9,6 +9,8 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
 import android.text.Layout;
@@ -363,8 +365,6 @@ public class WeekView extends View {
             mScrollToHour = mScrollToFirstVisibleHour;
             goToHour(mScrollToHour);
             mIsFirstDraw = false;
-
-            Log.d("WeekView", "THIS IS FIRST DRAW");
         }
     }
 
@@ -521,6 +521,20 @@ public class WeekView extends View {
             canvas.drawText(dayLabel, startPixel + mWidthPerDay / 2, mHeaderTextHeight + mHeaderRowPadding, sameDay ? mTodayHeaderTextPaint : mHeaderTextPaint);
             startPixel += mWidthPerDay + mColumnGap;
         }
+    }
+
+    /**
+     * Returns a calendar instance at the start of this day
+     *
+     * @return the calendar instance
+     */
+    private Calendar today() {
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        return today;
     }
 
     /**
@@ -704,8 +718,8 @@ public class WeekView extends View {
      * instance will be stored in "event".
      */
     private class EventRect {
-        public WeekViewEvent event;
-        public WeekViewEvent originalEvent;
+        public Eventable event;
+        public Eventable originalEvent;
         public RectF rectF;
         public float left;
         public float width;
@@ -723,7 +737,7 @@ public class WeekView extends View {
          * @param originalEvent The original event that was passed by the user.
          * @param rectF The rectangle.
          */
-        public EventRect(WeekViewEvent event, WeekViewEvent originalEvent, RectF rectF) {
+        public EventRect(Eventable event, Eventable originalEvent, RectF rectF) {
             this.event = event;
             this.rectF = rectF;
             this.originalEvent = originalEvent;
@@ -760,9 +774,9 @@ public class WeekView extends View {
         int[] lastFetchedMonth = mFetchedMonths.clone();
         if (mFetchedMonths[0] < 1 || mFetchedMonths[0] != previousMonth || mRefreshEvents) {
             if (!containsValue(lastFetchedMonth, previousMonth) && !isInEditMode()){
-                List<WeekViewEvent> events = mMonthChangeListener.onMonthChange((previousMonth==12)?day.get(Calendar.YEAR)-1:day.get(Calendar.YEAR), previousMonth);
+                List<Eventable> events = mMonthChangeListener.onMonthChange((previousMonth==12)?day.get(Calendar.YEAR)-1:day.get(Calendar.YEAR), previousMonth);
                 sortEvents(events);
-                for (WeekViewEvent event: events) {
+                for (Eventable event: events) {
                     cacheEvent(event);
                 }
             }
@@ -772,9 +786,9 @@ public class WeekView extends View {
         // Get events of this month.
         if (mFetchedMonths[1] < 1 || mFetchedMonths[1] != day.get(Calendar.MONTH)+1 || mRefreshEvents) {
             if (!containsValue(lastFetchedMonth, day.get(Calendar.MONTH)+1) && !isInEditMode()) {
-                List<WeekViewEvent> events = mMonthChangeListener.onMonthChange(day.get(Calendar.YEAR), day.get(Calendar.MONTH) + 1);
+                List<Eventable> events = mMonthChangeListener.onMonthChange(day.get(Calendar.YEAR), day.get(Calendar.MONTH) + 1);
                 sortEvents(events);
-                for (WeekViewEvent event : events) {
+                for (Eventable event : events) {
                     cacheEvent(event);
                 }
             }
@@ -784,9 +798,9 @@ public class WeekView extends View {
         // Get events of next month.
         if (mFetchedMonths[2] < 1 || mFetchedMonths[2] != nextMonth || mRefreshEvents) {
             if (!containsValue(lastFetchedMonth, nextMonth) && !isInEditMode()) {
-                List<WeekViewEvent> events = mMonthChangeListener.onMonthChange(nextMonth == 1 ? day.get(Calendar.YEAR) + 1 : day.get(Calendar.YEAR), nextMonth);
+                List<Eventable> events = mMonthChangeListener.onMonthChange(nextMonth == 1 ? day.get(Calendar.YEAR) + 1 : day.get(Calendar.YEAR), nextMonth);
                 sortEvents(events);
-                for (WeekViewEvent event : events) {
+                for (Eventable event : events) {
                     cacheEvent(event);
                 }
             }
@@ -820,7 +834,7 @@ public class WeekView extends View {
      * Cache the event for smooth scrolling functionality.
      * @param event The event to cache.
      */
-    private void cacheEvent(WeekViewEvent event) {
+    private void cacheEvent(Eventable event) {
         if (!isSameDay(event.getStartTime(), event.getEndTime())) {
             Calendar endTime = (Calendar) event.getStartTime().clone();
             endTime.set(Calendar.HOUR_OF_DAY, 23);
@@ -828,10 +842,10 @@ public class WeekView extends View {
             Calendar startTime = (Calendar) event.getEndTime().clone();
             startTime.set(Calendar.HOUR_OF_DAY, 0);
             startTime.set(Calendar.MINUTE, 0);
-            WeekViewEvent event1 = new WeekViewEvent(event.getId(), event.getName(), event.getStartTime(), endTime);
-            event1.setColor(event.getColor());
-            WeekViewEvent event2 = new WeekViewEvent(event.getId(), event.getName(), startTime, event.getEndTime());
-            event2.setColor(event.getColor());
+            Eventable event1 = event.copy();
+            event1.setEndTime(endTime);
+            Eventable event2 = event.copy();
+            event2.setStartTime(startTime);
             mEventRects.add(new EventRect(event1, event, null));
             mEventRects.add(new EventRect(event2, event, null));
         }
@@ -843,10 +857,10 @@ public class WeekView extends View {
      * Sorts the events in ascending order.
      * @param events The events to be sorted.
      */
-    private void sortEvents(List<WeekViewEvent> events) {
-        Collections.sort(events, new Comparator<WeekViewEvent>() {
+    private void sortEvents(List<Eventable> events) {
+        Collections.sort(events, new Comparator<Eventable>() {
             @Override
-            public int compare(WeekViewEvent event1, WeekViewEvent event2) {
+            public int compare(Eventable event1, Eventable event2) {
                 long start1 = event1.getStartTime().getTimeInMillis();
                 long start2 = event2.getStartTime().getTimeInMillis();
                 int comparator = start1 > start2 ? 1 : (start1 < start2 ? -1 : 0);
@@ -952,7 +966,7 @@ public class WeekView extends View {
      * @param event2 The second event.
      * @return true if the events overlap.
      */
-    private boolean isEventsCollide(WeekViewEvent event1, WeekViewEvent event2) {
+    private boolean isEventsCollide(Eventable event1, Eventable event2) {
         long start1 = event1.getStartTime().getTimeInMillis();
         long end1 = event1.getEndTime().getTimeInMillis();
         long start2 = event2.getStartTime().getTimeInMillis();
@@ -1531,15 +1545,15 @@ public class WeekView extends View {
     /////////////////////////////////////////////////////////////////
 
     public interface EventClickListener {
-        public void onEventClick(WeekViewEvent event, RectF eventRect);
+        public void onEventClick(Eventable event, RectF eventRect);
     }
 
     public interface MonthChangeListener {
-        public List<WeekViewEvent> onMonthChange(int newYear, int newMonth);
+        public List<Eventable> onMonthChange(int newYear, int newMonth);
     }
 
     public interface EventLongPressListener {
-        public void onEventLongPress(WeekViewEvent event, RectF eventRect);
+        public void onEventLongPress(Eventable event, RectF eventRect);
     }
 
     public interface EmptyViewClickListener {
@@ -1560,7 +1574,6 @@ public class WeekView extends View {
          */
         public void onFirstVisibleDayChanged(Calendar newFirstVisibleDay, Calendar oldFirstVisibleDay);
     }
-
 
     /////////////////////////////////////////////////////////////////
     //

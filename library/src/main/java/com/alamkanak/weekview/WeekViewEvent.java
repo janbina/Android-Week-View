@@ -6,7 +6,7 @@ import java.util.Calendar;
  * Created by Raquib-ul-Alam Kanak on 7/21/2014.
  * Website: http://april-shower.com
  */
-public class WeekViewEvent {
+public class WeekViewEvent implements Eventable{
     private long mId;
     private Calendar mStartTime;
     private Calendar mEndTime;
@@ -66,23 +66,37 @@ public class WeekViewEvent {
         this.mEndTime = endTime;
     }
 
+    public WeekViewEvent(long id, String name, Calendar startTime, Calendar endTime, int color){
+        this(id, name, startTime, endTime);
+        this.mColor = color;
+    }
 
+    @Override
+    public WeekViewEvent copy(){
+        return new WeekViewEvent(mId, mName, mStartTime, mEndTime, mColor);
+    }
+
+    @Override
     public Calendar getStartTime() {
         return mStartTime;
     }
 
+    @Override
     public void setStartTime(Calendar startTime) {
         this.mStartTime = startTime;
     }
 
+    @Override
     public Calendar getEndTime() {
         return mEndTime;
     }
 
+    @Override
     public void setEndTime(Calendar endTime) {
         this.mEndTime = endTime;
     }
 
+    @Override
     public String getName() {
         return mName;
     }
@@ -91,6 +105,7 @@ public class WeekViewEvent {
         this.mName = name;
     }
 
+    @Override
     public int getColor() {
         return mColor;
     }
@@ -99,6 +114,7 @@ public class WeekViewEvent {
         this.mColor = color;
     }
 
+    @Override
     public long getId() {
         return mId;
     }

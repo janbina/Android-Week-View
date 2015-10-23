@@ -2,13 +2,14 @@ package com.alamkanak.weekview.sample;
 
 import android.graphics.RectF;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.alamkanak.weekview.DateTimeInterpreter;
+import com.alamkanak.weekview.Eventable;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
 
@@ -18,12 +19,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-
 /**
  * Created by Raquib-ul-Alam Kanak on 7/21/2014.
  * Website: http://alamkanak.github.io/
  */
-public class MainActivity extends ActionBarActivity implements WeekView.MonthChangeListener,
+public class MainActivity extends AppCompatActivity implements WeekView.MonthChangeListener,
         WeekView.EventClickListener, WeekView.EventLongPressListener {
 
     private static final int TYPE_DAY_VIEW = 1;
@@ -140,10 +140,10 @@ public class MainActivity extends ActionBarActivity implements WeekView.MonthCha
     }
 
     @Override
-    public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
+    public List<Eventable> onMonthChange(int newYear, int newMonth) {
 
         // Populate the week view with some events.
-        List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
+        List<Eventable> events = new ArrayList<Eventable>();
 
         Calendar startTime = Calendar.getInstance();
         startTime.set(Calendar.HOUR_OF_DAY, 3);
@@ -251,12 +251,12 @@ public class MainActivity extends ActionBarActivity implements WeekView.MonthCha
     }
 
     @Override
-    public void onEventClick(WeekViewEvent event, RectF eventRect) {
+    public void onEventClick(Eventable event, RectF eventRect) {
         Toast.makeText(MainActivity.this, "Clicked " + event.getName(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void onEventLongPress(WeekViewEvent event, RectF eventRect) {
+    public void onEventLongPress(Eventable event, RectF eventRect) {
         Toast.makeText(MainActivity.this, "Long pressed event: " + event.getName(), Toast.LENGTH_SHORT).show();
     }
 }
