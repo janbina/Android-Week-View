@@ -123,6 +123,12 @@ public class WeekView extends View {
     private boolean mHasScrolledToHour = false;
     private double mScrollToFirstVisibleHour = -1;
 
+    // CurrentTime color
+    private int mNowLineThickness = 5;
+    private boolean displayCurrentTimeLine = true;
+    private int mNowLineColor = 0x773F51B5;
+    private Paint mCurrentTimeLinePaint;
+
     private final GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
 
         @Override
@@ -274,10 +280,7 @@ public class WeekView extends View {
 
     private void init() {
         // Get the date today.
-        mToday = Calendar.getInstance();
-        mToday.set(Calendar.HOUR_OF_DAY, 0);
-        mToday.set(Calendar.MINUTE, 0);
-        mToday.set(Calendar.SECOND, 0);
+        mToday = today();
 
         // Scrolling initialization.
         mGestureDetector = new GestureDetectorCompat(mContext, mGestureListener);
@@ -343,6 +346,12 @@ public class WeekView extends View {
         mEventTextPaint.setColor(mEventTextColor);
         mEventTextPaint.setTextSize(mEventTextSize);
         mStartDate = (Calendar) mToday.clone();
+
+        // Prepare currentTimeLine
+        // Prepare the "now" line color paint
+        mCurrentTimeLinePaint = new Paint();
+        mCurrentTimeLinePaint.setStrokeWidth(mNowLineThickness);
+        mCurrentTimeLinePaint.setColor(mNowLineColor);
 
         // Set default event color.
         mDefaultEventColor = Color.parseColor("#9fc6e7");
@@ -524,6 +533,16 @@ public class WeekView extends View {
             if (dayLabel == null)
                 throw new IllegalStateException("A DateTimeInterpreter must not return null date");
             canvas.drawText(dayLabel, startPixel + mWidthPerDay / 2, mHeaderTextHeight + mHeaderRowPadding, sameDay ? mTodayHeaderTextPaint : mHeaderTextPaint);
+
+            // Draw the current time line
+            float start = (startPixel < mHeaderColumnWidth ? mHeaderColumnWidth : startPixel);
+            if (displayCurrentTimeLine && isSameDay(today(), day)) {
+                float startY = mHeaderTextHeight + mHeaderRowPadding * 2 + mTimeTextHeight / 2 + mHeaderMarginBottom + mCurrentOrigin.y;
+                Calendar now = Calendar.getInstance();
+                float beforeNow = (now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE) / 60.0f) * mHourHeight;
+                canvas.drawLine(start, startY + beforeNow, startPixel + mWidthPerDay, startY + beforeNow, mCurrentTimeLinePaint);
+            }
+
             startPixel += mWidthPerDay + mColumnGap;
         }
     }
