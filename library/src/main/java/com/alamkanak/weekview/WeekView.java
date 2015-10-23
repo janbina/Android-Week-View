@@ -1535,7 +1535,7 @@ public class WeekView extends View {
     /**
      * Refreshes the view and loads the events again.
      */
-    public void notifyDatasetChanged(){
+    public void notifyDataSetChanged(){
         mRefreshEvents = true;
         invalidate();
     }
