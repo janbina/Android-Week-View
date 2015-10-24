@@ -373,9 +373,6 @@ public class WeekView extends View {
         // Hide anything that is in the bottom margin of the header row.
         canvas.drawRect(mHeaderColumnWidth, mHeaderTextHeight + mHeaderRowPadding * 2, getWidth(), mHeaderRowPadding * 2 + mHeaderTextHeight + mHeaderMarginBottom + mTimeTextHeight/2, mHeaderColumnBackgroundPaint);
 
-        // Hide right padding
-        canvas.drawRect(getWidth() - 30, 0, getWidth(), getHeight() , mHeaderColumnBackgroundPaint);
-
         //Scroll to hour
         if (mIsFirstDraw && !mHasScrolledToHour){
             mHasScrolledToHour = true;
@@ -410,7 +407,7 @@ public class WeekView extends View {
     private void drawHeaderRowAndEvents(Canvas canvas) {
         // Calculate the available width for each day.
         mHeaderColumnWidth = mTimeTextWidth + mHeaderColumnPadding *2;
-        mWidthPerDay = getWidth() - mHeaderColumnWidth - mColumnGap * (mNumberOfVisibleDays - 1) - 30;
+        mWidthPerDay = getWidth() - mHeaderColumnWidth - mColumnGap * (mNumberOfVisibleDays - 1);
         mWidthPerDay = mWidthPerDay/mNumberOfVisibleDays;
 
         if (mAreDimensionsInvalid) {
