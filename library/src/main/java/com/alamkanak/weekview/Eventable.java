@@ -9,6 +9,7 @@ public interface Eventable{
 	Calendar getEndTime();
     void setEndTime(Calendar time);
 	String getName(Context context);
+	String getSecondLineText(Context context);
 	long getId();
 	int getColor();
 	Eventable copy();
