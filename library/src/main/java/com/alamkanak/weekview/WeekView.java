@@ -373,6 +373,9 @@ public class WeekView extends View {
         // Hide anything that is in the bottom margin of the header row.
         canvas.drawRect(mHeaderColumnWidth, mHeaderTextHeight + mHeaderRowPadding * 2, getWidth(), mHeaderRowPadding * 2 + mHeaderTextHeight + mHeaderMarginBottom + mTimeTextHeight/2, mHeaderColumnBackgroundPaint);
 
+        // Hide right padding
+        canvas.drawRect(getWidth() - 30, 0, getWidth(), getHeight() , mHeaderColumnBackgroundPaint);
+
         //Scroll to hour
         if (mIsFirstDraw && !mHasScrolledToHour){
             mHasScrolledToHour = true;
