@@ -513,6 +513,15 @@ public class WeekView extends View {
                 mScrollToFirstVisibleHour = getIdealScrollHour(day);
             }
 
+            // Draw the current time line
+            float start = (startPixel < mHeaderColumnWidth ? mHeaderColumnWidth : startPixel);
+            if (displayCurrentTimeLine && isSameDay(today(), day)) {
+                float startY = mHeaderTextHeight + mHeaderRowPadding * 2 + mTimeTextHeight / 2 + mHeaderMarginBottom + mCurrentOrigin.y;
+                Calendar now = Calendar.getInstance();
+                float beforeNow = (now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE) / 60.0f) * mHourHeight;
+                canvas.drawLine(start, startY + beforeNow, startPixel + mWidthPerDay, startY + beforeNow, mCurrentTimeLinePaint);
+            }
+
             // In the next iteration, start from the next day.
             startPixel += mWidthPerDay + mColumnGap;
         }
@@ -533,15 +542,6 @@ public class WeekView extends View {
             if (dayLabel == null)
                 throw new IllegalStateException("A DateTimeInterpreter must not return null date");
             canvas.drawText(dayLabel, startPixel + mWidthPerDay / 2, mHeaderTextHeight + mHeaderRowPadding, sameDay ? mTodayHeaderTextPaint : mHeaderTextPaint);
-
-            // Draw the current time line
-            float start = (startPixel < mHeaderColumnWidth ? mHeaderColumnWidth : startPixel);
-            if (displayCurrentTimeLine && isSameDay(today(), day)) {
-                float startY = mHeaderTextHeight + mHeaderRowPadding * 2 + mTimeTextHeight / 2 + mHeaderMarginBottom + mCurrentOrigin.y;
-                Calendar now = Calendar.getInstance();
-                float beforeNow = (now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE) / 60.0f) * mHourHeight;
-                canvas.drawLine(start, startY + beforeNow, startPixel + mWidthPerDay, startY + beforeNow, mCurrentTimeLinePaint);
-            }
 
             startPixel += mWidthPerDay + mColumnGap;
         }
