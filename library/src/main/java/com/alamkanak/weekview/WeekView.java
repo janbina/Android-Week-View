@@ -407,7 +407,7 @@ public class WeekView extends View {
     private void drawHeaderRowAndEvents(Canvas canvas) {
         // Calculate the available width for each day.
         mHeaderColumnWidth = mTimeTextWidth + mHeaderColumnPadding *2;
-        mWidthPerDay = getWidth() - mHeaderColumnWidth - mColumnGap * (mNumberOfVisibleDays - 1);
+        mWidthPerDay = getWidth() - mHeaderColumnWidth - mColumnGap * (mNumberOfVisibleDays - 1) - 30;
         mWidthPerDay = mWidthPerDay/mNumberOfVisibleDays;
 
         if (mAreDimensionsInvalid) {
