@@ -514,7 +514,6 @@ public class WeekView extends View {
             }
 
             // Draw the current time line
-            float start = (startPixel < mHeaderColumnWidth ? mHeaderColumnWidth : startPixel);
             if (displayCurrentTimeLine && isSameDay(today(), day)) {
                 float startY = mHeaderTextHeight + mHeaderRowPadding * 2 + mTimeTextHeight / 2 + mHeaderMarginBottom + mCurrentOrigin.y;
                 Calendar now = Calendar.getInstance();
