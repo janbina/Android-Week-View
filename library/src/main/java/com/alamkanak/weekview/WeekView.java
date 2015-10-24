@@ -709,7 +709,7 @@ public class WeekView extends View {
         if (event.getName(mContext) != null) {
             bob.append(event.getName(mContext));
             bob.setSpan(new StyleSpan(android.graphics.Typeface.BOLD),0,bob.length(),0);
-            bob.append(' ');
+            bob.append('\n');
         }
         if (event.getSecondLineText(mContext) != null) {
             bob.append(event.getSecondLineText(mContext));
